@@ -1,0 +1,57 @@
+INFO:sentence_transformers.SentenceTransformer:Use pytorch device_name: cpu
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: sentence-transformers/all-MiniLM-L6-v2
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+INFO:sentence_transformers.SentenceTransformer:Use pytorch device_name: cpu
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: sentence-transformers/all-MiniLM-L6-v2
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 900-801-847
+INFO:werkzeug:127.0.0.1 - - [12/Jun/2025 16:27:26] "POST / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jun/2025 16:27:26] "[36mGET /static/logo1.jpg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [12/Jun/2025 16:27:26] "[36mGET /static/logo.png HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [12/Jun/2025 16:27:36] "POST / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jun/2025 16:27:36] "[36mGET /static/logo1.jpg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [12/Jun/2025 16:27:36] "[36mGET /static/logo.png HTTP/1.1[0m" 304 -
+INFO:__main__:Running normalized query: price of chainsaw
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:openai._base_client:Retrying request to /chat/completions in 0.487548 seconds
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:openai._base_client:Retrying request to /chat/completions in 0.897061 seconds
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+WARNING:__main__:Rate limit hit on attempt 1 for query: chainsaw price
+INFO:__main__:Running normalized query: price of chainsaw
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:openai._base_client:Retrying request to /chat/completions in 0.389840 seconds
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:openai._base_client:Retrying request to /chat/completions in 0.946759 seconds
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+WARNING:__main__:Rate limit hit on attempt 2 for query: chainsaw price
+INFO:__main__:Running normalized query: price of chainsaw
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:openai._base_client:Retrying request to /chat/completions in 0.423635 seconds
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:openai._base_client:Retrying request to /chat/completions in 0.979067 seconds
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+WARNING:__main__:Rate limit hit on attempt 3 for query: chainsaw price
+INFO:__main__:Running normalized query: price of chainsaw
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:openai._base_client:Retrying request to /chat/completions in 0.393224 seconds
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:openai._base_client:Retrying request to /chat/completions in 0.849908 seconds
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+WARNING:__main__:Rate limit hit on attempt 4 for query: chainsaw price
+INFO:__main__:Running normalized query: price of chainsaw
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:openai._base_client:Retrying request to /chat/completions in 0.467290 seconds
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+INFO:openai._base_client:Retrying request to /chat/completions in 0.996169 seconds
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+WARNING:__main__:Rate limit hit on attempt 5 for query: chainsaw price
+ERROR:__main__:Failed after 5 attempts for query: chainsaw price
+INFO:werkzeug:127.0.0.1 - - [12/Jun/2025 16:28:35] "POST / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Jun/2025 16:28:35] "[36mGET /static/logo1.jpg HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [12/Jun/2025 16:28:35] "[36mGET /static/logo.png HTTP/1.1[0m" 304 -
+INFO:werkzeug: * Detected change in 'R:\\chatbot\\chatbot\\app.py', reloading
+INFO:werkzeug: * Restarting with stat

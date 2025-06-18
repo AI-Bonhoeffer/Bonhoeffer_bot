@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bonhoeffer</title>                                               
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fcfcfb;
+      margin: 0;
+      padding: 0;
+    }
+
+    .chat-container {
+      width: 45%;
+      margin: 40px auto;
+      background: #eff3f0;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(105, 201, 10, 0.1);
+      padding: 20px;
+      padding-bottom: 30px;
+      position: relative;
+    }
+
+    .header {
+      background-color: #999B30;
+      color: rgb(12, 0, 0);
+      border-radius: 15px 15px 0 0;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header h2 {
+      margin-left: 10px;
+      font-size: 24px;
+    }
+    .logo-circle {
+      width: 45px;
+      height: 45px;
+      background-color: white;
+      color: #999B30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo-img {
+      width: 70%;
+      height:70%;
+     
+    }
+
+    .chat-log {
+      max-height: 400px;
+      overflow-y: auto;
+      background-color: #ffffff1c;
+      padding-right: 10px;
+      margin-bottom: 10px;
+    }
+
+    .chat-log::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .chat-log::-webkit-scrollbar-thumb {
+      background-color: #888;
+      border-radius: 4px;
+    }
+
+    .chat-log::-webkit-scrollbar-thumb:hover {
+      background-color: #555;
+    }
+
+    .chat-message {
+      margin: 5px 0;
+    }
+
+    .chat-message.user {
+      text-align: right;
+    }
+
+    .chat-message.assistant {
+      text-align: left;
+    }
+
+    .chat-message .bubble {
+      display: inline-block;
+      padding: 10px 15px;
+      border-radius: 20px;
+      max-width: 60%;
+      word-wrap: break-word;
+    }
+
+    .chat-message.user .bubble {
+      background-color: #f6f7fc;
+    }
+
+    .chat-message.assistant .bubble {
+      background-color: #f1f4ea;
+    }
+
+    .bubble a {
+      color: #999B30;
+      text-decoration: underline;
+    }
+
+    .bubble a:hover {
+      color: #999B30;
+    }
+
+    form {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border-radius: 16px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+
+    .send-button {
+      background-color: #eff3f0;
+      border: none;
+      border-radius: 50%;
+      padding: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s;
+    }
+
+    .send-button:hover {
+      background-color: white;
+    }
+
+    .send-icon {
+      width: 20px;
+      height: 20px;
+      object-fit: contain; 
+    }
+
+    .refresh-button {
+      background-color: #ffffff;
+      color: #9da80d;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+
+    .refresh-button:hover {
+      background-color: #f0f0f0;
+    }
+  
+
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <!-- Header with Logo, Title, and Refresh Button -->
+    <div class="header">
+      <div class="header-left">
+        <div class="logo-circle">
+          <img src="{{ url_for('static', filename='logo1.jpg') }}" alt="Logo" class="logo-img" />
+        </div>
+        <h2>Bonhoeffer Bot</h2> 
+        <h4>Powered By Kamlesh&Shubham</h4>
+      </div>
+      <button type="button" class="refresh-button" onclick="refreshChat()">↻</button>
+    </div>
+
+    <div class="chat-log" id="chat-log">
+      <div class="chat-message assistant">
+        <div class="bubble">👋 Welcome to Bonhoeffer Bot! How can I assist you today? </div>
+      </div>
+      {% for msg in messages %}
+      <div class="chat-message {{ msg.role }}">
+        <div class="bubble">{{ msg.content }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <!-- Form with custom icon send button -->
+    <form method="POST" id="chat-form">
+      <input type="text" name="message" placeholder="Type your message..." autocomplete="off" required />
+      <button type="submit" class="send-button">
+        <img src="{{ url_for('static', filename='logo.png') }}"  alt="Send" class="send-icon" />
+      </button>
+    </form>
+  </div>
+
+  <script>
+    function makeLinksClickable() {
+      const bubbles = document.querySelectorAll(".bubble");
+      const urlPattern = /(https?:\/\/[^\s]+)/g;
+
+      bubbles.forEach(bubble => {
+        bubble.innerHTML = bubble.innerHTML.replace(
+          urlPattern,
+          '<a href="$1" target="_blank">$1</a>'
+        );
+      });
+    }
+
+    function refreshChat() {
+      const chatLog = document.getElementById("chat-log");
+      chatLog.innerHTML = `
+        <div class="chat-message assistant">
+          <div class="bubble">👋 Welcome to Bonhoeffer Bot! How can I assist you today?</div>
+        </div>
+      `;
+      const form = document.getElementById("chat-form");
+      form.reset();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      makeLinksClickable();
+      const chatLog = document.getElementById("chat-log");
+      chatLog.scrollTop = chatLog.scrollHeight;
+    });
+  </script>
+</body>
+</html>
