@@ -3,6 +3,9 @@ flask
 python-dotenv
 twilio
 #python retrieval_bot.py
+langchain-core
+langchain-community
+langchain-openai
 
 
 
