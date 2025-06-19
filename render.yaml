@@ -1,7 +1,6 @@
 services:
   - type: web
-    name: my-chatbot
+    name: bonhoeffer-chatbot
     env: python
-    buildCommand: ""
     startCommand: python app.py
     plan: free

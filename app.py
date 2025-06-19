@@ -23,7 +23,7 @@ verified_users = {}  # Stores user_id -> expiry timestamp
 #     retriever=vector_store.as_retriever()
 # )
 
-responses.append("🧪 Chatbot working, but vector DB is disabled.")
+
 
 
 
@@ -39,6 +39,7 @@ def process_user_input(user_input, user_id):
     responses = []
     current_time = time.time()
 
+    responses.append("🧪 Chatbot working! (Vector DB disabled temporarily)")
     # Check verification status
     is_verified = user_id in verified_users and current_time < verified_users[user_id]
 
