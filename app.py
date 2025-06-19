@@ -11,7 +11,7 @@ from db import load_vector_store
 # Load environment variables
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
-
+print(openai_api_key)
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "super-secret")  # For session handling
 
@@ -19,7 +19,7 @@ verified_users = {}  # Stores user_id -> expiry timestamp
 vector_store = load_vector_store()
 
 qa_chain = RetrievalQA.from_chain_type(
-    llm=ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, openai_api_key=openai_api_key),
+    llm=ChatOpenAI(model_name="gpt-4o", temperature=0, openai_api_key=openai_api_key),
     retriever=vector_store.as_retriever()
 )
 
