@@ -2,12 +2,11 @@ openai
 flask
 python-dotenv
 twilio
-#python retrieval_bot.py
 langchain-core
 langchain-community
 langchain-openai
 langchain-huggingface
-
+langchain_pinecone
 
 
 
