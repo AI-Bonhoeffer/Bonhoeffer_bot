@@ -2,10 +2,12 @@ openai
 flask
 python-dotenv
 twilio
+
 langchain-core
 langchain-community
 langchain-openai
 langchain-huggingface
-langchain_pinecone
+langchain-pinecone
+
 sentence-transformers
 
