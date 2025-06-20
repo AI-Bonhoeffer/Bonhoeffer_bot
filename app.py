@@ -9,24 +9,22 @@ import time
 from db import load_vector_store
 
 # Load environment variables
+
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
-print(openai_api_key)
+print("Current OpenAI API Key:", openai_api_key)
+
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "super-secret")  # For session handling
-
 verified_users = {}  # Stores user_id -> expiry timestamp
-# vector_store = load_vector_store()
+vector_store = load_vector_store()
 
-# qa_chain = RetrievalQA.from_chain_type(
-#     llm=ChatOpenAI(model_name="gpt-4o", temperature=0, openai_api_key=openai_api_key),
-#     retriever=vector_store.as_retriever()
-# )
+qa_chain = RetrievalQA.from_chain_type(
+    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, openai_api_key=openai_api_key),
 
 
-
-
-
+    retriever=vector_store.as_retriever()
+)
 
 # 🔄 Refresh route to clear messages
 @app.route("/refresh-chat", methods=["GET"])
@@ -39,7 +37,6 @@ def process_user_input(user_input, user_id):
     responses = []
     current_time = time.time()
 
-    responses.append("🧪 Chatbot working! (Vector DB disabled temporarily)")
     # Check verification status
     is_verified = user_id in verified_users and current_time < verified_users[user_id]
 
@@ -126,5 +123,4 @@ def whatsapp_webhook():
     return str(resp)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Default if not provided
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
