@@ -20,3 +20,5 @@ def load_vector_store():
         pinecone_api_key=pinecone_api_key,
     )
     return vectorstore
+
+
