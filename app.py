@@ -6,7 +6,6 @@ import os
 import re
 
 from db import load_vector_store
-
 # Load environment variables
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
