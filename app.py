@@ -9,8 +9,12 @@ from db import load_vector_store
 # Load environment variables
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
- 
-app = Flask(__name__)
+
+base_dir = os.path.abspath(os.path.dirname(__file__))
+template_dir = os.path.abspath('templates')
+static_dir = os.path.abspath('static')
+
+app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 app.secret_key = 'your_secret_key'  # Needed for session
 
 # Load the vector store
