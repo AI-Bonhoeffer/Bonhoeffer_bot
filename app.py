@@ -2,22 +2,19 @@ from flask import Flask, render_template, request, session, redirect, url_for
 from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from dotenv import load_dotenv
+from twilio.twiml.messaging_response import MessagingResponse
 import os
 import re
-
+import time
 from db import load_vector_store
-# Load environment variables
+
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-base_dir = os.path.abspath(os.path.dirname(__file__))
-template_dir = os.path.abspath('templates')
-static_dir = os.path.abspath('static')
+app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "super-secret")  # For session handling
 
-app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
-app.secret_key = 'your_secret_key'  # Needed for session
-
-# Load the vector store
+verified_users = {}  # Stores user_id -> expiry timestamp
 vector_store = load_vector_store()
 
 qa_chain = RetrievalQA.from_chain_type(
@@ -25,91 +22,102 @@ qa_chain = RetrievalQA.from_chain_type(
     retriever=vector_store.as_retriever()
 )
 
+# 🔄 Refresh route to clear messages
+@app.route("/refresh-chat", methods=["GET"])
+def refresh_chat():
+    session.pop("messages", None)
+    return redirect(url_for("index"))
+
+# Shared input processing function
+def process_user_input(user_input, user_id):
+    responses = []
+    current_time = time.time()
+
+    # Check verification status
+    is_verified = user_id in verified_users and current_time < verified_users[user_id]
+
+    if "7320811109" in user_input and "123456" in user_input:
+        verified_users[user_id] = current_time + 86400  # 24 hours
+        responses.append("✅ You are verified. Valid for 24 hours.")
+
+    elif "7320811109" in user_input or "123456" in user_input:
+        responses.append("❌ Wrong ID or password. Please enter correct credentials or contact the sales team.")
+
+    elif len(user_input.strip()) == 4 and user_input.strip().isalnum():
+        if not is_verified:
+            responses.append("🔒 Please enter your ID and password to access price information.")
+        else:
+            query = f"What is the price of model ending with {user_input}?"
+            reply = qa_chain.run(query)
+            responses.append(reply)
+
+    elif any(word in user_input.lower() for word in ["production time", "lead time", "manufacturing time"]):
+        responses.append("🏭 The production time for any model is **90 days**.")
+
+    elif any(word in user_input.lower() for word in ["price", "cost", "rate", "paisa", "pice", "rupees", "rupee"]):
+        if not is_verified:
+            responses.append("🔒 Please enter your ID and password to access price information.")
+        else:
+            match = re.search(r"\b([A-Za-z0-9]{4})\b", user_input)
+            if match:
+                code = match.group(1)
+                query = f"What is the price of model ending with {code}?"
+                reply = qa_chain.run(query)
+            else:
+                reply = qa_chain.run(user_input)
+            responses.append(reply)
+
+    elif any(word in user_input.lower() for word in ["invoice", "packaging list", "dispatch", "packing"]):
+        if not is_verified:
+            responses.append("🔒 Please enter your ID and password to access packaging or invoice information.")
+        else:
+            reply = qa_chain.run(user_input)
+            responses.append(reply)
+
+    else:
+        reply = qa_chain.run(user_input)
+        responses.append(reply)
+
+    return responses, is_verified
+
+# 🌐 Web UI chat route
 @app.route("/", methods=["GET", "POST"])
 def index():
     if "messages" not in session:
-        session["messages"] = []
-    if "user_verified" not in session:
-        session["user_verified"] = False
-
-    messages = session["messages"]
-    user_verified = session["user_verified"]
+        session["messages"] = [{
+            # "role": "assistant",
+            # "content": "👋 Welcome to Bonhoeffer Bot! How can I assist you today?"
+        }]
 
     if request.method == "POST":
         user_input = request.form["message"]
-        messages.append({"role": "user", "content": user_input})
+        session["messages"].append({"role": "user", "content": user_input})
+        user_id = request.remote_addr  # Use IP address for web sessions
 
-        if "7320811109" in user_input and "123456" in user_input:
-            user_verified = True
-            messages.append({
-                "role": "assistant",
-                "content": "✅ You are verified. Valid for 24 hours."
-            })
+        replies, _ = process_user_input(user_input, user_id)
+        for reply in replies:
+            session["messages"].append({"role": "assistant", "content": reply})
 
-        elif any(x in user_input for x in ["7320811109", "123456"]) and not user_verified:
-            messages.append({
-                "role": "assistant",
-                "content": "❌ Please enter correct ID and password."
-            })
+    return render_template("chat.html", messages=session["messages"])
 
-        elif any(keyword in user_input.lower() for keyword in ["price", "cost", "rate", "paisa", "money", "dollar", "rs", "rupees", "invoice", "invoci", "invic", "invouc", "invoic", "moq", "maq", "meq","mooq","muq"]):
-            if not user_verified:
-                messages.append({
-                    "role": "assistant",
-                    "content": "🔒 Please enter your ID and password to access price information."
-                })
-            else:
-                match = re.search(r"\b([A-Za-z0-9]{4})\b", user_input)
-                if match:
-                    code = match.group(1)
-                    query = f"What is the price of model ending with {code}?"
-                    bot_reply = qa_chain.run(query)
-                else:
-                    bot_reply = qa_chain.run(user_input)
+# 📱 WhatsApp webhook route (via Twilio)
+@app.route("/webhook", methods=["POST"])
+def whatsapp_webhook():
+    incoming_msg = request.values.get('Body', '').strip()
+    user_id = request.values.get('From', 'unknown')  # WhatsApp sender ID
 
-                messages.append({"role": "assistant", "content": bot_reply})
+    resp = MessagingResponse()
+    if not incoming_msg:
+        resp.message("⚠️ Sorry, I didn't get your message.")
+        return str(resp)
 
-        elif any(word in user_input.lower() for word in ["invoice", "packaging list", "dispatch", "packing"]):
-            if not user_verified:
-                messages.append({
-                    "role": "assistant",
-                    "content": "🔒 Please enter your ID and password to access packaging or invoice information."
-                })
-            else:
-                bot_reply = qa_chain.run(user_input)
-                messages.append({"role": "assistant", "content": bot_reply})
+    replies, _ = process_user_input(incoming_msg, user_id)
 
-        elif len(user_input.strip()) == 4 and user_input.strip().isalnum():
-            if not user_verified:
-                messages.append({
-                    "role": "assistant",
-                    "content": "🔒 Please enter your ID and password to access price information."
-                })
-            else:
-                query = f"What is the price of model ending with {user_input}?"
-                bot_reply = qa_chain.run(query)
-                messages.append({"role": "assistant", "content": bot_reply})
+    for reply in replies:
+        resp.message(reply)
 
-        elif any(word in user_input.lower() for word in ["production time", "lead time", "manufacturing time"]):
-            messages.append({
-                "role": "assistant",
-                "content": "🏭 The production time for any model is **90 days**."
-            })
-
-        else:
-            bot_reply = qa_chain.run(user_input)
-            messages.append({"role": "assistant", "content": bot_reply})
-
-        session["messages"] = messages
-        session["user_verified"] = user_verified
-
-    return render_template("chat.html", messages=messages)
-
-@app.route("/refresh")
-def refresh():
-    session.pop("messages", None)
-    session.pop("user_verified", None)
-    return redirect(url_for("index"))
+    return str(resp)
 
 if __name__ == "__main__":
+    
     app.run(debug=True, port=5050)

@@ -2,12 +2,4 @@ openai
 flask
 python-dotenv
 twilio
-
-langchain-core
-langchain-community
-langchain-openai
-langchain-huggingface
-langchain-pinecone
-
-sentence-transformers
-
+#python retrieval_bot.py

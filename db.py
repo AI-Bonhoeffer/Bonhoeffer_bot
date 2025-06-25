@@ -9,6 +9,7 @@ from pinecone import Pinecone
 load_dotenv()
 pinecone_api_key = os.getenv("PINECONE_API_KEY")
 index_name = "bonhoeffer-bot"
+
 def load_vector_store():
     # Initialize embeddings
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -19,6 +20,5 @@ def load_vector_store():
         embedding=embeddings,
         pinecone_api_key=pinecone_api_key,
     )
+
     return vectorstore
-
-
