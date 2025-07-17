@@ -98,7 +98,7 @@ def index():
         for reply in replies:
             session["messages"].append({"role": "assistant", "content": reply})
 
-    return render_template("chat.html", messages=session["messages"])
+    return render_template("index.html", messages=session["messages"])
 
 # 📱 WhatsApp webhook route (via Twilio)
 @app.route("/webhook", methods=["POST"])
