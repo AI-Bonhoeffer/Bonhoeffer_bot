@@ -1,5 +1,21 @@
-openai
-flask
+# 🟢 Streamlit + Env
+streamlit
 python-dotenv
+
+# 🧠 LangChain Core
+langchain
+langchain-community
+langchain-huggingface
+langchain-pinecone
+
+# 🤖 AI & Embedding
+openai
+tiktoken
+sentence-transformers
+transformers
+
+# 🧠 Vector DB
+pinecone
+
+
 twilio
-#python retrieval_bot.py
