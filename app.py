@@ -101,7 +101,7 @@ def index():
     return render_template("index.html", messages=session["messages"])
 
 # 📱 WhatsApp webhook route (via Twilio)
-@app.route("https://bonhoeffer-bot.onrender.com/webhook", methods=["POST"])
+@app.route("/webhook", methods=["POST"])
 def whatsapp_webhook():
     incoming_msg = request.values.get('Body', '').strip()
     user_id = request.values.get('From', 'unknown')  # WhatsApp sender ID
