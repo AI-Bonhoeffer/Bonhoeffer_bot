@@ -19,3 +19,4 @@ pinecone
 
 flask
 twilio
+gunicorn
