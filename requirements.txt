@@ -17,5 +17,5 @@ transformers
 # 🧠 Vector DB
 pinecone
 
-
+flask
 twilio
