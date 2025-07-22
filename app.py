@@ -103,8 +103,13 @@ def index():
 # 📱 WhatsApp webhook route (via Twilio)
 @app.route("/webhook", methods=["POST"])
 def whatsapp_webhook():
+    print("Incoming form data:", request.form)  # ✅ Add this
+
     incoming_msg = request.values.get('Body', '').strip()
-    user_id = request.values.get('From', 'unknown')  # WhatsApp sender ID
+    user_id = request.values.get('From', 'unknown')
+
+    print("Parsed Body:", incoming_msg)         # ✅ Add this
+    print("Parsed From:", user_id)              # ✅ Add this
 
     resp = MessagingResponse()
     if not incoming_msg:
@@ -117,6 +122,7 @@ def whatsapp_webhook():
         resp.message(reply)
 
     return str(resp)
+
 
 if __name__ == "__main__":
     
