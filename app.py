@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, session, redirect, url_for
 from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from dotenv import load_dotenv
-from twilio.twiml.messaging_response import MessagingResponse
+from twilio.rest import Client
 import os
 import re
 import time
@@ -100,28 +100,48 @@ def index():
 
     return render_template("index.html", messages=session["messages"])
 
-# 📱 WhatsApp webhook route (via Twilio)
+# 📱 WhatsApp webhook route (production ready using Twilio API)
 @app.route("/webhook", methods=["POST"])
 def whatsapp_webhook():
-    print("Incoming form data:", request.form)  # ✅ Add this
+    print("Incoming form data:", request.form)
 
     incoming_msg = request.values.get('Body', '').strip()
-    user_id = request.values.get('From', 'unknown')
+    user_id = request.values.get('From', 'unknown').strip()
 
-    print("Parsed Body:", incoming_msg)         # ✅ Add this
-    print("Parsed From:", user_id)              # ✅ Add this
+    print("Parsed Body:", incoming_msg)
+    print("Parsed From:", user_id)
 
-    resp = MessagingResponse()
+    # Validate input
     if not incoming_msg:
-        resp.message("⚠️ Sorry, I didn't get your message.")
-        return str(resp)
+        fallback = "⚠️ Sorry, I didn't get your message."
+        send_whatsapp_message(user_id, fallback)
+        return "ok", 200
 
+    # Process and reply
     replies, _ = process_user_input(incoming_msg, user_id)
-
     for reply in replies:
-        resp.message(reply)
+        send_whatsapp_message(user_id, reply)
 
-    return str(resp)
+    return "ok", 200
+
+# ✅ Function to send WhatsApp messages via Twilio API
+def send_whatsapp_message(to_number, message):
+    try:
+        account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+        auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+        from_number = os.getenv("TWILIO_WHATSAPP_NUMBER")  # Format: whatsapp:+1234567890
+
+        client = Client(account_sid, auth_token)
+
+        client.messages.create(
+            body=message,
+            from_=from_number,
+            to=to_number
+        )
+        print(f"✅ Sent to {to_number}: {message}")
+
+    except Exception as e:
+        print(f"❌ Failed to send to {to_number}: {e}")
 
 
 if __name__ == "__main__":
