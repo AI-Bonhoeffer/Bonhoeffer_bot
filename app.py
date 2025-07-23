@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify
 from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from dotenv import load_dotenv
@@ -106,7 +106,8 @@ def whatsapp_webhook():
     print("Incoming form data:", request.form)
 
     # Get incoming WhatsApp message details
-    incoming_msg = request.values.get('Body', '').strip()
+    incoming_msg = request.form.get('Body') or request.form.get('Body\n') or ''
+    incoming_msg = incoming_msg.strip()
     user_id = request.values.get('From', '').strip()  # User's WhatsApp number
 
     print("Parsed Body:", incoming_msg)
