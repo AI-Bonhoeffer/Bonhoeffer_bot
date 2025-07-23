@@ -105,37 +105,38 @@ def index():
 def whatsapp_webhook():
     print("Incoming form data:", request.form)
 
+    # Get incoming WhatsApp message details
     incoming_msg = request.values.get('Body', '').strip()
-    user_id = request.values.get('From', 'unknown').strip()
+    user_id = request.values.get('From', '').strip()  # User's WhatsApp number
 
     print("Parsed Body:", incoming_msg)
     print("Parsed From:", user_id)
 
-    # Validate input
     if not incoming_msg:
         fallback = "⚠️ Sorry, I didn't get your message."
         send_whatsapp_message(user_id, fallback)
-        return "ok", 200
+        return jsonify({"status": "empty"}), 200
 
-    # Process and reply
+    # Process with your existing Langchain logic
     replies, _ = process_user_input(incoming_msg, user_id)
+
     for reply in replies:
         send_whatsapp_message(user_id, reply)
 
-    return "ok", 200
+    return jsonify({"status": "ok"}), 200
 
-# ✅ Function to send WhatsApp messages via Twilio API
+
 def send_whatsapp_message(to_number, message):
     try:
         account_sid = os.getenv("TWILIO_ACCOUNT_SID")
         auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-        from_number = os.getenv("TWILIO_WHATSAPP_NUMBER")  # Format: whatsapp:+1234567890
+        messaging_sid = os.getenv("TWILIO_MESSAGING_SERVICE_SID")
 
         client = Client(account_sid, auth_token)
 
         client.messages.create(
             body=message,
-            from_=from_number,
+            messaging_service_sid=messaging_sid,
             to=to_number
         )
         print(f"✅ Sent to {to_number}: {message}")
