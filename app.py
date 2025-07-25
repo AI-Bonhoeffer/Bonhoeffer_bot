@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 import os
 import re
 import time
-import sqlite3  # ✅ NEW: SQLite for persistent verification
+import sqlite3
+import uuid  # ✅ For generating unique session user IDs
 from db import load_vector_store
 
 load_dotenv()
@@ -14,10 +15,8 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "super-secret")
 
-# ✅ NEW: SQLite database file
 DB_FILE = "verified_users.db"
 
-# ✅ NEW: Initialize verification database
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -30,26 +29,25 @@ def init_db():
     conn.commit()
     conn.close()
 
-# ✅ NEW: Set verification
 def set_verified(user_id, expiry_time):
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("REPLACE INTO verified_users (user_id, expiry) VALUES (?, ?)", (user_id, int(expiry_time)))
     conn.commit()
     conn.close()
+    print(f"✅ Set verified for {user_id} until {expiry_time}")
 
-# ✅ NEW: Check if user is verified
 def is_user_verified(user_id):
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("SELECT expiry FROM verified_users WHERE user_id = ?", (user_id,))
     row = c.fetchone()
     conn.close()
-    return row and row[0] > time.time()
+    result = row and row[0] > time.time()
+    print(f"🔍 Checking verification for {user_id}: {result}")
+    return result
 
-# ✅ Initialize DB on app start
 init_db()
-
 vector_store = load_vector_store()
 
 qa_chain = RetrievalQA.from_chain_type(
@@ -62,7 +60,6 @@ def refresh_chat():
     session.pop("messages", None)
     return redirect(url_for("index"))
 
-# 🔁 Updated: now uses persistent verification
 def process_user_input(user_input, user_id):
     responses = []
     current_time = time.time()
@@ -115,15 +112,16 @@ def process_user_input(user_input, user_id):
 @app.route("/", methods=["GET", "POST"])
 def index():
     if "messages" not in session:
-        session["messages"] = [{
-            # "role": "assistant",
-            # "content": "👋 Welcome to Bonhoeffer Bot! How can I assist you today?"
-        }]
+        session["messages"] = []
+
+    # ✅ NEW: Assign session-based user ID
+    if "user_id" not in session:
+        session["user_id"] = str(uuid.uuid4())
+    user_id = session["user_id"]
 
     if request.method == "POST":
         user_input = request.form["message"]
         session["messages"].append({"role": "user", "content": user_input})
-        user_id = request.remote_addr  # Use IP address for web sessions
 
         replies, _ = process_user_input(user_input, user_id)
         for reply in replies:
@@ -156,6 +154,8 @@ def meta_webhook():
             if messages:
                 msg = messages[0]
                 user_id = msg["from"]
+                if user_id.startswith("whatsapp:"):
+                    user_id = user_id.replace("whatsapp:", "")
                 user_input = msg["text"]["body"]
 
                 replies, _ = process_user_input(user_input, user_id)
