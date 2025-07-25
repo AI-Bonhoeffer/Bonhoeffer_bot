@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, session, redirect, url_for, j
 from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from dotenv import load_dotenv
-from twilio.rest import Client
+#from twilio.rest import Client
 import os
 import re
 import time
@@ -100,50 +100,65 @@ def index():
 
     return render_template("index.html", messages=session["messages"])
 
-# 📱 WhatsApp webhook route (production ready using Twilio API)
-@app.route("/webhook", methods=["POST"])
-def whatsapp_webhook():
-    print("Incoming form data:", request.form)
 
-    # Get incoming WhatsApp message details
-    incoming_msg = request.form.get('Body') or request.form.get('Body\n') or ''
-    incoming_msg = incoming_msg.strip()
-    user_id = request.values.get('From', '').strip()  # User's WhatsApp number
+@app.route("/webhook", methods=["GET", "POST"])
+def meta_webhook():
+    if request.method == "GET":
+        VERIFY_TOKEN = "test"  # Any string you choose
+        mode = request.args.get("hub.mode")
+        token = request.args.get("hub.verify_token")
+        challenge = request.args.get("hub.challenge")
 
-    print("Parsed Body:", incoming_msg)
-    print("Parsed From:", user_id)
+        if mode == "subscribe" and token == VERIFY_TOKEN:
+            return challenge, 200
+        return "Verification failed", 403
 
-    if not incoming_msg:
-        fallback = "⚠️ Sorry, I didn't get your message."
-        send_whatsapp_message(user_id, fallback)
-        return jsonify({"status": "empty"}), 200
+    elif request.method == "POST":
+        data = request.get_json()
+        print("📨 Incoming message:", data)
 
-    # Process with your existing Langchain logic
-    replies, _ = process_user_input(incoming_msg, user_id)
+        try:
+            entry = data["entry"][0]
+            changes = entry["changes"][0]
+            value = changes["value"]
 
-    for reply in replies:
-        send_whatsapp_message(user_id, reply)
+            messages = value.get("messages")
+            if messages:
+                msg = messages[0]
+                user_id = msg["from"]
+                user_input = msg["text"]["body"]
 
-    return jsonify({"status": "ok"}), 200
+                replies, _ = process_user_input(user_input, user_id)
+
+                for reply in replies:
+                    send_whatsapp_message_meta(user_id, reply)
+
+        except Exception as e:
+            print("❌ Error:", e)
+
+        return "OK", 200
 
 
-def send_whatsapp_message(to_number, message):
-    try:
-        account_sid = os.getenv("TWILIO_ACCOUNT_SID")
-        auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-        messaging_sid = os.getenv("TWILIO_MESSAGING_SERVICE_SID")
+def send_whatsapp_message_meta(to_number, message):
+    import requests, os
 
-        client = Client(account_sid, auth_token)
+    token = os.getenv("META_WA_ACCESS_TOKEN")
+    phone_number_id = os.getenv("META_PHONE_NUMBER_ID")
 
-        client.messages.create(
-            body=message,
-            messaging_service_sid=messaging_sid,
-            to=to_number
-        )
-        print(f"✅ Sent to {to_number}: {message}")
+    url = f"https://graph.facebook.com/v18.0/{phone_number_id}/messages"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "messaging_product": "whatsapp",
+        "to": to_number,
+        "type": "text",
+        "text": { "body": message }
+    }
 
-    except Exception as e:
-        print(f"❌ Failed to send to {to_number}: {e}")
+    response = requests.post(url, headers=headers, json=data)
+    print("📤 Sent:", response.status_code, response.text)
 
 
 if __name__ == "__main__":
