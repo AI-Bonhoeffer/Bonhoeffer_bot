@@ -2,19 +2,54 @@ from flask import Flask, render_template, request, session, redirect, url_for, j
 from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from dotenv import load_dotenv
-#from twilio.rest import Client
 import os
 import re
 import time
+import sqlite3  # ✅ NEW: SQLite for persistent verification
 from db import load_vector_store
 
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "super-secret")  # For session handling
+app.secret_key = os.getenv("SECRET_KEY", "super-secret")
 
-verified_users = {}  # Stores user_id -> expiry timestamp
+# ✅ NEW: SQLite database file
+DB_FILE = "verified_users.db"
+
+# ✅ NEW: Initialize verification database
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS verified_users (
+            user_id TEXT PRIMARY KEY,
+            expiry INTEGER
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# ✅ NEW: Set verification
+def set_verified(user_id, expiry_time):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("REPLACE INTO verified_users (user_id, expiry) VALUES (?, ?)", (user_id, int(expiry_time)))
+    conn.commit()
+    conn.close()
+
+# ✅ NEW: Check if user is verified
+def is_user_verified(user_id):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT expiry FROM verified_users WHERE user_id = ?", (user_id,))
+    row = c.fetchone()
+    conn.close()
+    return row and row[0] > time.time()
+
+# ✅ Initialize DB on app start
+init_db()
+
 vector_store = load_vector_store()
 
 qa_chain = RetrievalQA.from_chain_type(
@@ -22,22 +57,19 @@ qa_chain = RetrievalQA.from_chain_type(
     retriever=vector_store.as_retriever()
 )
 
-# 🔄 Refresh route to clear messages
 @app.route("/refresh-chat", methods=["GET"])
 def refresh_chat():
     session.pop("messages", None)
     return redirect(url_for("index"))
 
-# Shared input processing function
+# 🔁 Updated: now uses persistent verification
 def process_user_input(user_input, user_id):
     responses = []
     current_time = time.time()
-
-    # Check verification status
-    is_verified = user_id in verified_users and current_time < verified_users[user_id]
+    is_verified = is_user_verified(user_id)
 
     if "7320811109" in user_input and "123456" in user_input:
-        verified_users[user_id] = current_time + 86400  # 24 hours
+        set_verified(user_id, current_time + 86400)  # 24 hours
         responses.append("✅ You are verified. Valid for 24 hours.")
 
     elif "7320811109" in user_input or "123456" in user_input:
@@ -80,7 +112,6 @@ def process_user_input(user_input, user_id):
 
     return responses, is_verified
 
-# 🌐 Web UI chat route
 @app.route("/", methods=["GET", "POST"])
 def index():
     if "messages" not in session:
@@ -100,11 +131,10 @@ def index():
 
     return render_template("index.html", messages=session["messages"])
 
-
 @app.route("/webhook", methods=["GET", "POST"])
 def meta_webhook():
     if request.method == "GET":
-        VERIFY_TOKEN = "test"  # Any string you choose
+        VERIFY_TOKEN = "test"
         mode = request.args.get("hub.mode")
         token = request.args.get("hub.verify_token")
         challenge = request.args.get("hub.challenge")
@@ -138,7 +168,6 @@ def meta_webhook():
 
         return "OK", 200
 
-
 def send_whatsapp_message_meta(to_number, message):
     import requests, os
 
@@ -160,7 +189,5 @@ def send_whatsapp_message_meta(to_number, message):
     response = requests.post(url, headers=headers, json=data)
     print("📤 Sent:", response.status_code, response.text)
 
-
 if __name__ == "__main__":
-    
     app.run(debug=True, port=5050)
